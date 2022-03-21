@@ -10,6 +10,9 @@
         name: gtar
         state: latest
     - package:
+        name: tmux
+        state: latest
+    - package:
         name: debootstrap
         state: latest
     - stat:
