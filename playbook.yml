@@ -1,0 +1,49 @@
+---
+- hosts: all
+  become: yes
+  remote_user: freebsd
+  tasks:
+    - package:
+        name: bash
+        state: latest
+    - package:
+        name: gtar
+        state: latest
+    - package:
+        name: debootstrap
+        state: latest
+    - stat:
+        path: /compat/linux
+      register: linux
+    - shell: 'debootstrap oldstable /compat/linux || true'
+      when: not linux.stat.exists
+    - file:
+        src: "../lib/x86_64-linux-gnu/ld-2.28.so"
+        dest: "/compat/linux/lib64/ld-linux-x86-64.so.2"
+        force: true
+        follow: false
+    - copy:
+        src: linux
+        dest: /etc/rc.conf.d/linux
+    - service:
+        name: linux
+        state: started
+    - copy:
+        src: pw.conf
+        dest: /etc/pw.conf
+    - user:
+        name: factorio
+    - get_url:
+        url: https://factorio.com/get-download/stable/headless/linux64
+        dest: /home/factorio/factorio_headless.tgz
+        owner: factorio
+        group: factorio
+    - stat:
+        path: /home/factorio/factorio
+      register: factorio
+    - unarchive:
+        src: /home/factorio/factorio_headless.tgz
+        remote_src: yes
+        dest: /home/factorio
+      become_user: factorio
+      when: not factorio.stat.exists
